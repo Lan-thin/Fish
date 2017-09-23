@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<style type="text/css">
+			*{margin:0;padding:0}
+			html,body{
+				background:#000;
+				text-align: center;
+			}
+			canvas{
+				background: url(img/game_bg_2_hd.jpg);
+				
+			}
+		</style>
+	</head>
+	<body>
+		<canvas id="c1" width="800" height="600"></canvas>
+	</body>
+</html>
+<script>
+	function rand(min,max){
+		return Math.floor(Math.random()*(max-min+1)+min)
+	}
+	function d2a(n){
+      return n*Math.PI/180;
+    }
+    function a2d(n){
+      return n*180/Math.PI;
+    }
+    var JSON={};
+    function loadeImage(arr,success,loading){
+    	
+    	var count=0;
+    	for(var i=0;i<arr.length;i++){
+    		(function(index){
+    			var img=new Image();
+    			img.onload=function(){
+	    			count++
+	    			JSON[arr[index]]=this;
+	    			loading&&loading(count,arr.length);
+	    			if(arr.length==count){
+	    				success&&success();
+	    			}
+    			}
+    			img.src="img/"+arr[index]+".png"
+    		})(i)	
+    	}
+    }
+</script>
+<script>
+	//fish
+	var FISH_SIZE=[
+	null,
+	{w: 55, h: 37, collR: 17, m : 4},
+	{w: 78, h: 64, collR: 24, m : 4},
+	{w: 72, h: 56, collR: 20, m : 4},
+	{w: 77, h: 59, collR: 22, m : 4},
+	{w: 107, h: 122, collR: 29, m : 4},
+	{w: 105, h: 79, collR: 39, m : 8},
+	{w: 92, h: 150, collR: 35, m : 6},
+	{w: 174, h: 126, collR: 30, m : 8},
+	{w: 166, h: 183, collR: 35, m : 8},
+	{w: 178, h: 187, collR: 40, m : 6}
+	
+];
+	class Fish{
+		constructor(type){
+			this.x=-100;
+			this.y=-100;
+			this.rotate=0;
+			this.type=type;
+			this.speed=(12-this.type)/2;
+			this.cure=0;
+			this.move();
+			this.move_timer=null;
+			this.chang_timer=null;
+			this.collR=0;
+		}
+		draw(gd){
+			var w=FISH_SIZE[this.type].w;
+			var h=FISH_SIZE[this.type].h;
+			this.collR=FISH_SIZE[this.type].collR;
+			gd.save();
+			gd.translate(this.x,this.y);
+			gd.rotate(d2a(this.rotate));
+			if(this.rotate>90&&this.rotate<270){
+				gd.scale(1,-1);
+			}
+			gd.drawImage(JSON["fish"+this.type],0,this.cure*h,w,h,-w/2,-h/2,w,h);
+			
+
+			gd.restore();
+		}
+		move(){
+			var m=FISH_SIZE[this.type].m;
+			this.move_timer=setInterval(function(){
+				this.x+= Math.cos(d2a(this.rotate))*this.speed;
+          		this.y+=Math.sin(d2a(this.rotate))*this.speed;
+			}.bind(this),50);
+			this.chang_timer=setInterval(function(){
+				this.cure++;
+				if(this.cure==m){
+					this.cure=0
+				}
+			}.bind(this),100)
+		}
+		isIn(x,y){
+			var a=this.x-x;
+			var b=this.y-y;
+			var c=Math.sqrt(a*a+b*b);
+			if(c<this.collR){
+				return true;
+			}else{
+				return false;
+			}
+		}
+	}
+</script>
+<script>
+	var FISH_SIZE=[
+	null,
+	{w: 55, h: 37, collR: 17, m : 4,c:1},
+	{w: 78, h: 64, collR: 24, m : 4,c:2},
+	{w: 72, h: 56, collR: 20, m : 4,c:5},
+	{w: 77, h: 59, collR: 22, m : 4,c:10},
+	{w: 107, h: 122, collR: 29, m : 4,c:15},
+	{w: 105, h: 79, collR: 39, m : 8,c:20},
+	{w: 92, h: 150, collR: 35, m : 6,c:25},
+	{w: 174, h: 126, collR: 30, m : 8,c:30},
+	{w: 166, h: 183, collR: 35, m : 8,c:40},
+	{w: 178, h: 187, collR: 40, m : 6,c:50}
+];
+
+	class DieFish{
+		constructor(type){
+			this.x=-100;
+			this.y=-100;
+			this.rotate=0;
+			this.type=type||1;
+			this.cure=0;
+			this.timer=null;
+			this.c=FISH_SIZE[this.type].c;
+			this.move();
+			
+		}
+		draw(gd){
+			var m=FISH_SIZE[this.type].m;
+			var w=FISH_SIZE[this.type].w;
+			var h=FISH_SIZE[this.type].h;
+			gd.save();
+			gd.translate(this.x,this.y);
+			gd.rotate(d2a(this.rotate));
+			if(this.rotate>90&&this.rotate<270){
+				gd.scale(1,-1);
+			}
+			gd.drawImage(JSON["fish"+this.type],0,(this.cure+m)*h,w,h,-w/2,-h/2,w,h);
+			
+
+			gd.restore();
+		}
+		move(){
+			
+			var m=FISH_SIZE[this.type].m;
+			this.timer=setInterval(function(){
+				this.cure++;
+				if(this.cure==(4+m)){
+					this.cure=0;
+				}
+			}.bind(this),250)
+		}
+	}
+</script>
+<script>
+	//炮台 cannon
+	var CANNON_SIZE=[
+	null,
+	{w: 74, h: 74},
+	{w: 74, h: 76},
+	{w: 74, h: 76},
+	{w: 74, h: 83},
+	{w: 74, h: 85},
+	{w: 74, h: 90},
+	{w: 74, h: 94}
+];
+	class Cannon{
+		constructor(type,rotate){
+			this.type=type||1;
+			this.rotate=rotate;
+			this.x=431;
+			this.y=570;
+			this.cure=0;
+			
+		}
+		draw(gd){
+			var w=CANNON_SIZE[this.type].w;
+			var h=CANNON_SIZE[this.type].h;
+			gd.save();
+			gd.translate(this.x,this.y);
+			gd.rotate(d2a(this.rotate));
+			gd.drawImage(JSON["cannon"+this.type],0,this.cure*h,w,h,-w/2,-h/2,w,h);
+			gd.restore();
+		}
+		enmit(){
+			clearInterval(enmit_timer);
+			var enmit_timer=setInterval(function(){
+				this.cure++;
+				if(this.cure==5){
+					this.cure=0;
+					clearInterval(enmit_timer)
+				}
+			}.bind(this),16)
+		}
+	}
+</script>
+<script type="text/javascript">
+	class Coin{
+		constructor(){
+			this.x=0;
+			this.y=0;
+			this.cure=0;
+			this.scale=1;
+			this.timer=null;
+			this.move();
+			this.playSong();
+		}
+		draw(gd){
+			gd.save();
+			gd.translate(this.x+30,this.y+30);
+			gd.scale(this.scale,this.scale);
+			gd.drawImage(JSON["coinAni2"],0,this.cure*60,60,60,-30,-30,60,60)
+			gd.restore();
+		}
+		move(){
+			clearInterval(this.timer);
+			this.timer=setInterval(function(){
+				this.cure++;
+				if(this.cure==10){
+					this.cure=0;
+				}
+				this.x+=(0-this.x)/10;
+				this.y+=(600-this.y)/10;
+				this.scale-=0.05;
+				if(this.scale<0){
+					clearInterval(this.timer)
+				}
+			}.bind(this),30)
+		}
+		playSong(){
+			var oA=new Audio()
+			oA.src="snd/coin.wav";
+			oA.play();
+		}
+	}
+</script>
+<script>
+	var coinTexts = {
+						'0' : {sx: 0, w: 36, h: 49},//0
+						'1' : {sx: 36, w: 36, h: 49},//1
+						'2' : {sx: 72, w: 36, h: 49},//2
+						'3' : {sx: 108, w: 36, h: 49},//3
+						'4' : {sx: 144, w: 36, h: 49},//4
+						'5' : {sx: 180, w: 36, h: 49},//5
+						'6' : {sx: 216, w: 36, h: 49},//6
+						'7' : {sx: 252, w: 36, h: 49},//7
+						'8' : {sx: 288, w: 36, h: 49},//8
+						'9' : {sx: 324, w: 36, h: 49},//9
+						'x' : {sx: 360, w: 36, h: 49}//x
+					};
+	class CoinText{
+		constructor(num){
+			this.num=num.split("");
+			this.x=0;
+			this.y=0;
+			this.move();
+			this.timer=null;
+			this.speed=0;
+		}
+		draw(gd){
+			for(var i=0;i<this.num.length;i++){
+				gd.save();	
+				gd.drawImage(JSON["coinText"],coinTexts[this.num[i]].sx,0,36,49,this.x+36*i,this.y,36,49)
+				gd.restore();
+			}		
+		}
+		move(){
+			clearInterval(this.timer);
+			this.timer=setInterval(function(){
+				this.speed++;
+//				if(this.speed==10){
+//					clearInterval(this.timer);
+//				}
+				this.y-=this.speed;
+			}.bind(this),30)
+		}
+	}
+</script>
+<script type="text/javascript">
+	var countTexts = {
+						'0' : {sy: 216, w: 20, h: 24},//0
+						'1' : {sy: 192, w: 20, h: 24},//1
+						'2' : {sy: 168, w: 20, h: 24},//2
+						'3' : {sy: 144, w: 20, h: 24},//3
+						'4' : {sy: 120, w: 20, h: 24},//4
+						'5' : {sy: 96, w: 20, h: 24},//5
+						'6' : {sy: 72, w: 20, h: 24},//6
+						'7' : {sy: 48, w: 20, h: 24},//7
+						'8' : {sy: 24, w: 20, h: 24},//8
+						'9' : {sy: 0, w: 20, h: 24}//9
+					};
+	class CountCoin{
+		constructor(count){
+			this.x=18;
+			this.y=578;
+			this.count=count.split("");
+		}
+		draw(gd){
+			
+			for(var i=0;i<this.count.length;i++){
+				gd.save();	
+				gd.drawImage(JSON["number_black"],0,countTexts[this.count[i]].sy,20,24,this.x+24*i,this.y-3,20,24)
+				gd.restore();
+			}		
+		}
+		
+	}
+</script>
+<script>
+	var WEB_SIZE=[
+	null,
+	{x: 332, y: 373, w: 88, h: 85},
+	{x: 173, y: 368, w: 130, h: 130},
+	{x: 9, y: 410, w: 115, h: 110},
+	{x: 253, y: 194, w: 150, h: 146},
+	{x: 0, y: 242, w: 160, h: 155},
+	{x: 237, y: 0, w: 185, h: 185},
+	{x: 22, y: 21, w: 199, h: 202}
+
+];
+	class Web{
+		constructor(type){
+			this.type=type||1;
+			this.x=0;
+			this.y=0;
+			this.scale=0.5;
+			this.move();
+			
+		}
+		draw(gd){
+			var x=WEB_SIZE[this.type].x;
+			var y=WEB_SIZE[this.type].y;
+			var w=WEB_SIZE[this.type].w;
+			var h=WEB_SIZE[this.type].h;
+			gd.save();
+			gd.translate(this.x,this.y)
+			gd.scale(this.scale,this.scale);
+			gd.drawImage(JSON["web"],x,y,w,h,-w/2,-h/2,w,h);
+			gd.restore()
+		}
+		move(){
+			var timer=setInterval(function(){
+				this.scale+=0.05;
+				if(this.scale>1){
+					clearInterval(timer)
+				}
+			}.bind(this),20)
+		}
+	}
+</script>
+<script>
+	//炮弹
+	var BULLET_SIZE=[
+	null,
+	{x: 86, y: 0, w: 24, h: 26},
+	{x: 62, y: 0, w: 25, h: 29},
+	{x: 30, y: 0, w: 31, h: 35},
+	{x: 32, y: 35, w: 27, h: 31},
+	{x: 30, y: 82, w: 29, h: 33},
+	{x: 0, y: 82, w: 30, h: 34},
+	{x: 0, y: 0, w: 30, h: 44}
+];
+	class Bullet{
+		constructor(type){
+			this.type=type;
+			this.x=0;
+			this.y=0;
+			this.rotate=0;
+			this.speed=10;
+			this.timer=null;
+			this.move();
+			this.song();
+		}
+		draw(gd){
+			var x=BULLET_SIZE[this.type].x;
+			var y=BULLET_SIZE[this.type].y;
+			var w=BULLET_SIZE[this.type].w;
+			var h=BULLET_SIZE[this.type].h;
+			gd.save();
+			gd.translate(this.x,this.y);
+			gd.rotate(d2a(this.rotate));
+			gd.drawImage(JSON["bullet"],x,y,w,h,-w/2,-h/2,w,h);
+			gd.restore();
+		}
+		move(){
+			
+			clearInterval(this.timer);
+			this.timer=setInterval(function(){
+				this.x+=Math.sin(d2a(this.rotate))*this.speed;
+          		this.y-=Math.cos(d2a(this.rotate))*this.speed;
+          		
+			}.bind(this),30)
+		}
+		song(){
+			var oA=new Audio();
+			oA.src="snd/cannon.mp3";
+			oA.play();
+		}
+	}
+</script>
+<script>
+	class CannonMins{
+		constructor(x,y){
+			this.x=x;
+			this.y=y;
+		}
+		draw(gd){
+			
+			gd.save();
+			
+			gd.drawImage(JSON["bottom"],this.x,this.y,35,28,350,565,35,28)
+			gd.restore();
+			
+		}
+	}
+	class CannonPlus{
+		constructor(x,y){
+			this.x=x;
+			this.y=y;
+		}
+		draw(gd){
+			gd.save();
+			gd.drawImage(JSON["bottom"],this.x,this.y,35,28,475,565,35,28)
+			gd.restore();
+		}
+	}
+</script>
+<script>
+	const resouce=["bottom","bullet","cannon1","cannon2","cannon3","cannon4","cannon5","cannon6","cannon7","coinAni1","coinAni2","coinText","fish1","fish2","fish3","fish4","fish5","fish6","fish7","fish8","fish9","fish10","number_black","shark1","shark2","web","cannonMinus","cannonMinusDown","cannonPlus","cannonPlusDown"];
+	window.onload=function(){
+		var oC=document.querySelector("#c1");
+		var gd=oC.getContext("2d");
+		loadeImage(resouce,function(){
+			var arrBullet=[];
+			var arrFish=[];
+			var arrCoin=[];
+			var arrWeb=[];
+			var arrDieFish=[];
+			var arrcoinText=[];
+			var type=1;
+			var d=0;
+			var count=1000;
+			var c=new Cannon(type,d);
+			oC.onclick=function(e){
+				var x1=e.clientX-oC.offsetLeft;
+				var y1=e.clientY-oC.offsetTop;
+				var x=e.clientX-oC.offsetLeft-c.x;
+				var y=c.y-(e.y-oC.offsetTop);
+				count-=c.type
+				 d=90-a2d(Math.atan2(y,x));
+				
+				if(x1>354&&y1>565&&x1<388){
+					type--;
+					if(type<=1){
+						type=1;
+					}
+					c=new Cannon(type,0);
+					c.draw(gd);
+					
+					
+				}else if(x1>477&&x1<514&&y1>565){
+					type++;
+					if(type>=7){
+						type=7;
+					}
+					c=new Cannon(type,0);
+					c.draw(gd)
+				}else{
+					c=new Cannon(type,d)
+					c.rotate=d;
+					c.enmit();
+					c.draw(gd)
+					var b=new Bullet(c.type);
+					
+					b.rotate=d;
+					b.x=c.x;
+					b.y=c.y;
+					arrBullet.push(b);
+				}
+				
+			}
+			
+			
+			setInterval(function(){
+				gd.clearRect(0,0,oC.width,oC.height);
+				
+				for(var i=0;i<arrBullet.length;i++){
+					arrBullet[i].draw(gd);
+				}
+				for(var i=0;i<arrFish.length;i++){
+					arrFish[i].draw(gd);
+				}
+				for(var i=0;i<arrCoin.length;i++){
+					arrCoin[i].draw(gd);
+				}
+				for(var i=0;i<arrWeb.length;i++){
+					arrWeb[i].draw(gd);
+				}
+				for(var i=0;i<arrDieFish.length;i++){
+					arrDieFish[i].draw(gd);
+				}
+				for(var i=0;i<arrcoinText.length;i++){
+					arrcoinText[i].draw(gd);
+				}
+				
+				for(var i=0;i<arrFish.length;i++){
+					for(var j=0;j<arrBullet.length;j++){
+						var br=arrFish[i].isIn(arrBullet[j].x,arrBullet[j].y);
+						
+						if(br){
+							var fishX=arrFish[i].x;
+							var fishY=arrFish[i].y;
+							var fishType=arrFish[i].type;
+							var fishRotate=arrFish[i].rotate;
+							arrFish.splice(i--,1);
+							arrBullet.splice(j--,1);
+							var coin=new Coin();
+							coin.x=fishX;
+							coin.y=fishY;
+							arrCoin.push(coin);
+							
+							var web=new Web(c.type);
+							web.x=fishX;
+							web.y=fishY;
+							arrWeb.push(web);
+							setTimeout(function(){
+								arrWeb.shift()
+							},1000)
+
+							
+							
+							var dieFish=new DieFish(fishType);
+							
+							dieFish.x=fishX;
+							dieFish.y=fishY;
+							dieFish.rotate=fishRotate;
+							arrDieFish.push(dieFish);
+							count+=dieFish.c
+							setTimeout(function(){
+								clearInterval(arrDieFish[0].timer)
+								arrDieFish.shift();
+							},2000)
+							var str="x"+String(dieFish.c);
+							var cointext=new CoinText(str);
+							cointext.x=fishX;
+							cointext.y=fishY;
+							arrcoinText.push(cointext);	
+							setTimeout(function(){
+								clearInterval(arrcoinText[0].timer)
+								arrcoinText.shift();
+							},200)
+							
+						}
+					}
+				}
+				if(Math.random()<0.1){
+					
+					var f=new Fish(rand(1,10));
+					
+					var d=Math.random();
+					if(d<0.25){
+						f.x=rand(-100,0);
+						f.y=rand(0,oC.height);
+					}else if(d>0.25&&d<0.5){
+						f.x=rand(0,oC.width);
+						f.y=rand(-100,0);
+					}else if(d>0.5&&d<0.75){
+						f.x=rand(oC.width,oC.width+100);
+						f.y=rand(0,oC.height);
+					}else{
+						f.x=rand(0,oC.width);
+						f.y=rand(oC.height,oC.height+100);
+					}
+					f.rotate=rand(0,360);
+					f.draw(gd)
+					arrFish.push(f);
+					
+				}
+				for(var i=0;i<arrBullet.length;i++){
+				if(arrBullet[i].x<-100||arrBullet[i].x>oC.width+100||arrBullet[i].y<-100||arrBullet[i].y>oC.height+100){
+					clearInterval(arrBullet[i].timer);
+					arrBullet.splice(i,1);
+					
+				}
+			}
+			for(var i=0;i<arrFish.length;i++){
+				if(arrFish[i].x<-100||arrFish[i].x>oC.width+100||arrFish[i].y<-100||arrFish[i].y>oC.height+100){
+					clearInterval(arrFish[i].timer);
+					clearInterval(arrFish[i].move_timer);
+					clearInterval(arrFish[i].chang_timer);
+					arrFish.splice(i,1);
+					
+				}
+			}	
+			gd.drawImage(JSON["bottom"],0,0,765,70,0,532,765,70);
+			var cannonMins=new CannonMins(135,76);
+			cannonMins.draw(gd);
+			var cannonPlus=new CannonPlus(46,76);
+			cannonPlus.draw(gd);
+			c.draw(gd)
+			var strmoney="000000"+count;
+			//console.log(strmoney)
+			var strcount=strmoney.substr(strmoney.length-6);
+			
+			var score=new CountCoin(strcount)
+			score.draw(gd)
+			
+
+			},16)
+			
+
+		},function(loaded,totle){
+			console.log(loaded/totle);	
+		})
+	}
+</script>
